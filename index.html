@@ -1142,7 +1142,7 @@ function playDestruction(winningSide, roundIdx, callback){
       stage.remove();
       callback();
     }, 400);
-  }, 3800);
+  }, 3300);
 }
 
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
@@ -1393,7 +1393,7 @@ function doBlackhole(img,ov){
 function doHammer(img,ov){
   // CSS hammer head + handle built from divs, swings in big arc from upper-right
   const hammerWrap=document.createElement('div');
-  hammerWrap.style.cssText='position:absolute;top:-140px;left:50%;transform:translateX(-50%) rotate(60deg);transform-origin:bottom center;z-index:15;pointer-events:none;animation:hammerSwing .55s ease-in forwards;';
+  hammerWrap.style.cssText='position:absolute;top:-20px;left:50%;transform:translateX(-50%) rotate(60deg);transform-origin:bottom center;z-index:15;pointer-events:none;animation:hammerSwing .55s ease-in forwards;';
   // Handle
   const handle=document.createElement('div');
   handle.style.cssText='width:14px;height:120px;background:linear-gradient(90deg,#8B4513,#D2691E,#8B4513);border-radius:4px;margin:0 auto;box-shadow:2px 2px 6px rgba(0,0,0,0.6);';
