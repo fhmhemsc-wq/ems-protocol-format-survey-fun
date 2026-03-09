@@ -342,6 +342,67 @@ textarea.form-control{resize:vertical;min-height:90px;line-height:1.5;}
   100%{opacity:0;transform:scale(.9);}
 }
 
+/* Ocean rise */
+@keyframes oceanRise{
+  0%{bottom:-100%;}
+  100%{bottom:0;}
+}
+/* Shark fin crosses */
+@keyframes sharkFinCross{
+  0%{right:-80px;}
+  100%{right:110%;}
+}
+/* Shark rises */
+@keyframes sharkRise{
+  0%{bottom:-200px;}
+  100%{bottom:20%;}
+}
+/* Wave wall rises */
+@keyframes waveWallRise{
+  0%{bottom:-120%;}
+  100%{bottom:-10%;}
+}
+/* Spray flies */
+@keyframes sprayFly{
+  0%{transform:translate(0,0);opacity:1;}
+  100%{transform:translate(${Math.random()*40-20}px,-40px);opacity:0;}
+}
+/* Cloud rolls in */
+@keyframes cloudRollIn{
+  0%{top:-80px;opacity:0;}
+  100%{top:0;opacity:1;}
+}
+/* Bolt appears */
+@keyframes boltAppear{
+  0%{opacity:0;}
+  100%{opacity:1;}
+}
+/* Tornado sweep */
+@keyframes tornadoSweep{
+  0%{left:-30%;}
+  100%{left:110%;}
+}
+@keyframes tornadoBand{
+  0%{left:-30%;}
+  100%{left:110%;}
+}
+@keyframes debrisSpin{
+  0%{transform:rotate(0deg) translate(0,0);opacity:1;}
+  100%{transform:rotate(720deg) translate(var(--ex,60px),var(--ey,-60px));opacity:0;}
+}
+/* Tornado suck */
+@keyframes tornadoSuck{
+  0%{transform:scale(1) rotate(0deg);opacity:1;}
+  50%{transform:scale(0.7) rotate(180deg) translateX(30%);}
+  100%{transform:scale(0) rotate(540deg) translateX(80%);opacity:0;}
+}
+/* Hammer swing */
+@keyframes hammerSwing{
+  0%{transform:translateX(-50%) rotate(60deg);}
+  70%{transform:translateX(-50%) rotate(-5deg);}
+  85%{transform:translateX(-50%) rotate(5deg);}
+  100%{transform:translateX(-50%) rotate(0deg);}
+}
 /* Screen shake */
 @keyframes screenShake{
   0%,100%{transform:translate(0,0);}
@@ -1198,43 +1259,118 @@ function doExplode(img,ov){
 }
 
 function doTornado(img,ov){
-  // Tornado forms at bottom and grows, spinning the image away
-  const tornado=document.createElement('div');
-  tornado.style.cssText='position:absolute;bottom:-10%;left:50%;transform:translateX(-50%);font-size:0px;pointer-events:none;transition:font-size 0.6s ease;z-index:15;';
-  tornado.textContent='🌪️';
-  ov.appendChild(tornado);
-  setTimeout(()=>{tornado.style.fontSize='120px';},50);
-  // Debris particles spinning outward
-  for(let i=0;i<20;i++){
+  // Dark sky
+  const sky=document.createElement('div');
+  sky.style.cssText='position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,15,40,0.85),rgba(40,30,20,0.5));z-index:4;border-radius:8px;';
+  ov.appendChild(sky);
+  // CSS funnel — wide top, narrow bottom, sweeps left to right
+  const funnel=document.createElement('div');
+  funnel.style.cssText=`
+    position:absolute;top:0;left:-30%;z-index:15;
+    width:180px;height:100%;
+    background:linear-gradient(180deg,
+      rgba(120,100,80,0.95) 0%,
+      rgba(100,80,60,0.9) 20%,
+      rgba(80,60,40,0.85) 50%,
+      rgba(60,40,20,0.8) 75%,
+      transparent 100%);
+    clip-path:polygon(10% 0%,90% 0%,55% 40%,52% 70%,50% 100%,50% 100%,48% 70%,45% 40%);
+    filter:blur(2px);
+    animation:tornadoSweep 1.8s ease forwards;
+    transform-origin:50% 0%;
+  `;
+  ov.appendChild(funnel);
+  // Rotating bands inside funnel
+  for(let i=0;i<5;i++){
+    const band=document.createElement('div');
+    band.style.cssText=`
+      position:absolute;top:${5+i*18}%;left:-30%;
+      width:180px;height:${8+i*3}px;
+      background:rgba(${160-i*20},${140-i*20},${100-i*10},0.6);
+      clip-path:polygon(${10+i*2}% 0%,${90-i*2}% 0%,${70-i*3}% 100%,${30+i*3}% 100%);
+      animation:tornadoBand 1.8s ${i*0.05}s ease forwards;
+      z-index:16;
+    `;
+    ov.appendChild(band);
+  }
+  // Debris — small pieces spinning around the funnel
+  for(let i=0;i<25;i++){
     const d=document.createElement('div');
-    const angle=Math.random()*360;
-    const dist=60+Math.random()*120;
-    d.style.cssText=`position:absolute;width:6px;height:6px;border-radius:1px;top:60%;left:50%;background:rgba(200,200,200,0.8);--ex:${Math.cos(angle*Math.PI/180)*dist}px;--ey:${Math.sin(angle*Math.PI/180)*dist}px;--cr:${Math.random()*720}deg;animation:confettiFall ${0.6+Math.random()*0.8}s ${0.4+Math.random()*0.4}s ease forwards;`;
+    const sz=4+Math.random()*8;
+    d.style.cssText=`
+      position:absolute;
+      width:${sz}px;height:${sz}px;
+      border-radius:${Math.random()>.5?'50%':'1px'};
+      background:rgba(${150+Math.random()*80},${120+Math.random()*60},${80+Math.random()*40},0.9);
+      top:${10+Math.random()*80}%;
+      left:${Math.random()*80}%;
+      animation:debrisSpin ${0.6+Math.random()*0.8}s ${Math.random()*1.2}s ease forwards;
+      z-index:17;
+    `;
     ov.appendChild(d);
   }
-  setTimeout(()=>{img.style.animation='tornadoSpin 1.5s ease forwards';},500);
+  // Image gets sucked into funnel
+  setTimeout(()=>{img.style.animation='tornadoSuck 1.4s ease forwards';},400);
 }
 
 function doLightning(img,ov){
-  // Multiple lightning bolts strike sequentially, image zaps away
-  const bolts=['15%','50%','80%'];
-  bolts.forEach((left,i)=>{
-    const bolt=document.createElement('div');
-    bolt.style.cssText=`position:absolute;top:-5%;left:${left};font-size:72px;pointer-events:none;opacity:0;animation:lightningStrike .15s ${i*0.3}s ease forwards;z-index:15;`;
-    bolt.textContent='⚡';
-    ov.appendChild(bolt);
-    // Flash on each strike
+  // Storm clouds roll in from top
+  const cloud1=document.createElement('div');
+  cloud1.style.cssText='position:absolute;top:-80px;left:10%;width:60%;height:80px;background:radial-gradient(ellipse,#444 0%,#222 60%,transparent 100%);border-radius:50%;z-index:14;animation:cloudRollIn .5s ease forwards;filter:blur(4px);';
+  ov.appendChild(cloud1);
+  const cloud2=document.createElement('div');
+  cloud2.style.cssText='position:absolute;top:-70px;right:5%;width:50%;height:70px;background:radial-gradient(ellipse,#555 0%,#333 60%,transparent 100%);border-radius:50%;z-index:14;animation:cloudRollIn .5s .1s ease forwards;filter:blur(3px);';
+  ov.appendChild(cloud2);
+
+  // Draw jagged SVG lightning bolt from top center down
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;z-index:18;pointer-events:none;opacity:0;animation:boltAppear .1s .5s ease forwards;';
+  svg.setAttribute('viewBox','0 0 100 100');
+  svg.setAttribute('preserveAspectRatio','none');
+  const bolt=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  bolt.setAttribute('points','55,0 45,35 58,35 38,70 52,70 30,100');
+  bolt.setAttribute('fill','none');
+  bolt.setAttribute('stroke','#ffffff');
+  bolt.setAttribute('stroke-width','3');
+  bolt.setAttribute('filter','url(#glow)');
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const filter=document.createElementNS('http://www.w3.org/2000/svg','filter');
+  filter.setAttribute('id','glow');
+  const blur=document.createElementNS('http://www.w3.org/2000/svg','feGaussianBlur');
+  blur.setAttribute('stdDeviation','2');blur.setAttribute('result','blur');
+  const merge=document.createElementNS('http://www.w3.org/2000/svg','feMerge');
+  const mn1=document.createElementNS('http://www.w3.org/2000/svg','feMergeNode');mn1.setAttribute('in','blur');
+  const mn2=document.createElementNS('http://www.w3.org/2000/svg','feMergeNode');mn2.setAttribute('in','SourceGraphic');
+  merge.appendChild(mn1);merge.appendChild(mn2);
+  filter.appendChild(blur);filter.appendChild(merge);
+  defs.appendChild(filter);svg.appendChild(defs);svg.appendChild(bolt);
+  // Yellow inner bolt
+  const bolt2=bolt.cloneNode();bolt2.setAttribute('stroke','#ffff00');bolt2.setAttribute('stroke-width','1.5');
+  svg.appendChild(bolt2);
+  ov.appendChild(svg);
+
+  // Three bright flashes on impact
+  [0.5,0.7,0.9].forEach((t,i)=>{
     const flash=document.createElement('div');
-    flash.style.cssText=`position:absolute;inset:0;background:#fff;opacity:0;border-radius:4px;animation:lightningFlashSingle .15s ${i*0.3}s ease forwards;`;
+    flash.style.cssText=`position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,#ffffff,#ffffaa,transparent 70%);opacity:0;border-radius:8px;z-index:20;animation:lightningFlashSingle .12s ${t}s ease forwards;`;
     ov.appendChild(flash);
   });
-  setTimeout(()=>{img.style.animation='zappedFade 1s ease forwards';},900);
-  // Crackling sparks
-  for(let i=0;i<15;i++){
-    const sp=document.createElement('div');
-    sp.style.cssText=`position:absolute;width:3px;height:3px;border-radius:50%;background:#ffffaa;top:${Math.random()*100}%;left:${Math.random()*100}%;--cx:${(Math.random()-0.5)*100}px;--cy:${(Math.random()-0.5)*100}px;--cr:${Math.random()*360}deg;animation:confettiFall .4s ${Math.random()*0.8}s ease forwards;`;
-    ov.appendChild(sp);
-  }
+
+  // Char marks where bolt hits
+  setTimeout(()=>{
+    const char=document.createElement('div');
+    char.style.cssText='position:absolute;bottom:0;left:40%;width:20%;height:15%;background:radial-gradient(circle,#ff6600,#333,transparent);border-radius:50%;z-index:16;animation:emojiBurst .3s ease forwards;';
+    ov.appendChild(char);
+    // Sparks flying out from impact point
+    for(let i=0;i<20;i++){
+      const sp=document.createElement('div');
+      const angle=Math.random()*360;
+      const dist=40+Math.random()*80;
+      sp.style.cssText=`position:absolute;width:3px;height:3px;border-radius:50%;background:#ffff88;bottom:10%;left:50%;--ex:${Math.cos(angle*Math.PI/180)*dist}px;--ey:${Math.sin(angle*Math.PI/180)*dist-60}px;--cr:0deg;animation:confettiFall .5s ease forwards;`;
+      ov.appendChild(sp);
+    }
+    img.style.animation='zappedFade 1.2s ease forwards';
+  },900);
 }
 
 function doBlackhole(img,ov){
@@ -1255,57 +1391,106 @@ function doBlackhole(img,ov){
 }
 
 function doHammer(img,ov){
-  // Giant hammer drops, screen shakes, image shatters
-  const hammer=document.createElement('div');
-  hammer.style.cssText='position:absolute;top:-120px;left:50%;transform:translateX(-50%) rotate(-20deg);font-size:96px;pointer-events:none;z-index:15;animation:hammerDrop .5s ease forwards;transform-origin:top right;';
-  hammer.textContent='🔨';
-  ov.appendChild(hammer);
-  // Impact stars
+  // CSS hammer head + handle built from divs, swings in big arc from upper-right
+  const hammerWrap=document.createElement('div');
+  hammerWrap.style.cssText='position:absolute;top:-140px;left:50%;transform:translateX(-50%) rotate(60deg);transform-origin:bottom center;z-index:15;pointer-events:none;animation:hammerSwing .55s ease-in forwards;';
+  // Handle
+  const handle=document.createElement('div');
+  handle.style.cssText='width:14px;height:120px;background:linear-gradient(90deg,#8B4513,#D2691E,#8B4513);border-radius:4px;margin:0 auto;box-shadow:2px 2px 6px rgba(0,0,0,0.6);';
+  // Head
+  const head=document.createElement('div');
+  head.style.cssText='width:70px;height:40px;background:linear-gradient(180deg,#aaa,#666,#333);border-radius:6px;margin:-6px auto 0;box-shadow:0 4px 12px rgba(0,0,0,0.7),inset 0 2px 4px rgba(255,255,255,0.2);position:relative;';
+  // Head shine
+  const shine=document.createElement('div');
+  shine.style.cssText='position:absolute;top:4px;left:8px;width:54px;height:8px;background:rgba(255,255,255,0.25);border-radius:3px;';
+  head.appendChild(shine);
+  hammerWrap.appendChild(head);
+  hammerWrap.appendChild(handle);
+  ov.appendChild(hammerWrap);
+
+  // On impact
   setTimeout(()=>{
-    const impact=document.createElement('div');
-    impact.style.cssText='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:80px;animation:emojiBurst .3s ease forwards;z-index:16;pointer-events:none;';
-    impact.textContent='💥';
-    ov.appendChild(impact);
-    // Screen shake via stage
-    const stage=hammer.closest('[style*="position:fixed"]');
-    if(stage){
-      stage.style.animation='screenShake .4s ease';
-    }
-    img.style.animation='hammerSmash .6s ease forwards';
-    // Cracks radiate out
-    for(let i=0;i<8;i++){
+    // Screen shake
+    const stage=hammerWrap.closest('[style*="position:fixed"]');
+    if(stage) stage.style.animation='screenShake .5s ease';
+    // Impact flash
+    const flash=document.createElement('div');
+    flash.style.cssText='position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,200,0.9),transparent 60%);border-radius:8px;z-index:20;animation:lightningFlashSingle .2s ease forwards;';
+    ov.appendChild(flash);
+    // Crack lines from center
+    for(let i=0;i<12;i++){
       const crack=document.createElement('div');
-      const angle=i*(360/8);
-      const len=40+Math.random()*60;
-      crack.style.cssText=`position:absolute;top:50%;left:50%;width:0;height:2px;background:rgba(255,255,255,0.8);transform:rotate(${angle}deg);transform-origin:left center;animation:slashLine .3s ease forwards;`;
+      const angle=i*(360/12)+(Math.random()*15);
+      const len=50+Math.random()*80;
+      crack.style.cssText=`position:absolute;top:50%;left:50%;width:0;height:${1+Math.random()*2}px;background:rgba(255,255,255,${0.6+Math.random()*0.4});transform:rotate(${angle}deg);transform-origin:left center;animation:slashLine .4s ${Math.random()*.15}s ease forwards;z-index:19;`;
       ov.appendChild(crack);
     }
-  },480);
+    // Debris chunks fly out
+    for(let i=0;i<16;i++){
+      const chunk=document.createElement('div');
+      const sz=6+Math.random()*12;
+      const angle=Math.random()*360;
+      const dist=60+Math.random()*120;
+      chunk.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:2px;top:50%;left:50%;background:rgba(200,200,180,0.9);--ex:${Math.cos(angle*Math.PI/180)*dist}px;--ey:${Math.sin(angle*Math.PI/180)*dist}px;--cr:${Math.random()*720}deg;animation:confettiFall .6s ease forwards;z-index:18;`;
+      ov.appendChild(chunk);
+    }
+    img.style.animation='hammerSmash .7s ease forwards';
+  },530);
 }
 
 function doShark(img,ov){
-  // Shark swims in from right with open mouth, chomps image
-  const water=document.createElement('div');
-  water.style.cssText='position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(180deg,transparent,rgba(0,80,200,0.5));animation:waveWash 3s ease forwards;z-index:5;';
-  ov.appendChild(water);
-  // Fin appears first
+  // Ocean water rises from bottom
+  const ocean=document.createElement('div');
+  ocean.style.cssText='position:absolute;bottom:-100%;left:0;right:0;height:60%;background:linear-gradient(180deg,rgba(0,100,220,0.7) 0%,rgba(0,60,160,0.9) 100%);z-index:5;animation:oceanRise .7s ease forwards;border-radius:4px;';
+  ov.appendChild(ocean);
+  // Water surface shimmer
+  const surface=document.createElement('div');
+  surface.style.cssText='position:absolute;bottom:59%;left:-5%;width:110%;height:20px;background:linear-gradient(90deg,rgba(0,150,255,0.6),rgba(100,200,255,0.8),rgba(0,150,255,0.6));border-radius:50%;z-index:6;animation:oceanRise .7s ease forwards;filter:blur(2px);';
+  ov.appendChild(surface);
+
+  // Dorsal fin cuts across the water surface
   const fin=document.createElement('div');
-  fin.style.cssText='position:absolute;bottom:38%;right:-60px;font-size:40px;pointer-events:none;z-index:12;animation:sharkFinIn .8s ease forwards;';
-  fin.textContent='🔱';
+  fin.innerHTML=`<svg viewBox="0 0 60 80" width="60" height="80">
+    <polygon points="30,0 55,70 5,70" fill="#1a1a2e" stroke="#0a0a1a" stroke-width="1"/>
+  </svg>`;
+  fin.style.cssText='position:absolute;bottom:52%;right:-80px;z-index:12;animation:sharkFinCross 1s .5s ease forwards;';
   ov.appendChild(fin);
-  // Then full shark appears
-  const shark=document.createElement('div');
-  shark.style.cssText='position:absolute;top:30%;right:-140px;font-size:110px;pointer-events:none;z-index:13;animation:sharkIn 1s .5s ease forwards;';
-  shark.textContent='🦈';
-  ov.appendChild(shark);
-  // Chomp — image gets bitten
+
+  // Giant shark mouth rises from bottom center
+  const sharkBody=document.createElement('div');
+  sharkBody.style.cssText='position:absolute;bottom:-200px;left:50%;transform:translateX(-50%);z-index:15;width:200px;height:200px;animation:sharkRise .6s 1.2s ease forwards;pointer-events:none;';
+  // Upper jaw
+  const upperJaw=document.createElement('div');
+  upperJaw.style.cssText='position:absolute;top:0;left:0;right:0;height:80px;background:linear-gradient(180deg,#2a2a3e,#1a1a2e);border-radius:50% 50% 0 0;overflow:hidden;';
+  // Teeth top
+  const teethTop=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  teethTop.setAttribute('viewBox','0 0 200 40');teethTop.style.cssText='position:absolute;bottom:0;width:100%;height:40px;';
+  const tPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  tPath.setAttribute('d','M0,40 L0,20 L15,0 L30,20 L45,0 L60,20 L75,0 L90,20 L105,0 L120,20 L135,0 L150,20 L165,0 L180,20 L200,0 L200,40 Z');
+  tPath.setAttribute('fill','#f0f0e0');teethTop.appendChild(tPath);upperJaw.appendChild(teethTop);
+  // Lower jaw
+  const lowerJaw=document.createElement('div');
+  lowerJaw.style.cssText='position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(180deg,#e8c49a,#c49a78);border-radius:0 0 50% 50%;overflow:hidden;';
+  const teethBot=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  teethBot.setAttribute('viewBox','0 0 200 40');teethBot.style.cssText='position:absolute;top:0;width:100%;height:40px;';
+  const bPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  bPath.setAttribute('d','M0,0 L0,20 L15,40 L30,20 L45,40 L60,20 L75,40 L90,20 L105,40 L120,20 L135,40 L150,20 L165,40 L180,20 L200,40 L200,0 Z');
+  bPath.setAttribute('fill','#f0f0e0');teethBot.appendChild(bPath);lowerJaw.appendChild(teethBot);
+  sharkBody.appendChild(upperJaw);sharkBody.appendChild(lowerJaw);
+  ov.appendChild(sharkBody);
+
+  // Image gets eaten
   setTimeout(()=>{
-    img.style.animation='sharkBite .5s ease forwards';
-    const chomp=document.createElement('div');
-    chomp.style.cssText='position:absolute;top:20%;left:30%;font-size:60px;animation:emojiBurst .3s ease forwards;pointer-events:none;z-index:16;';
-    chomp.textContent='💦';
-    ov.appendChild(chomp);
-  },1400);
+    img.style.animation='sharkBite .4s ease forwards';
+    // Water splash
+    for(let i=0;i<12;i++){
+      const drop=document.createElement('div');
+      const angle=-90+(Math.random()-0.5)*120;
+      const dist=50+Math.random()*80;
+      drop.style.cssText=`position:absolute;width:6px;height:10px;border-radius:50%;background:rgba(100,180,255,0.9);bottom:40%;left:50%;--ex:${Math.cos(angle*Math.PI/180)*dist}px;--ey:${Math.sin(angle*Math.PI/180)*dist-60}px;--cr:0deg;animation:confettiFall .6s ease forwards;z-index:20;`;
+      ov.appendChild(drop);
+    }
+  },1700);
 }
 
 function doFreeze(img,ov){
@@ -1360,25 +1545,62 @@ function doPixel(img,ov){
 }
 
 function doWave(img,ov){
-  // Ocean wave washes over and sweeps image away
-  // Sky darkens
+  // Storm sky
   const sky=document.createElement('div');
-  sky.style.cssText='position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,30,80,0.6),transparent);z-index:4;';
+  sky.style.cssText='position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,20,60,0.8) 0%,rgba(0,40,100,0.4) 60%,transparent 100%);z-index:4;border-radius:8px;';
   ov.appendChild(sky);
-  // Multiple wave layers
-  [0,0.3,0.6].forEach((delay,i)=>{
-    const wave=document.createElement('div');
-    const h=60+i*20;
-    wave.style.cssText=`position:absolute;bottom:-${h}px;left:-10%;width:120%;height:${h+40}px;background:linear-gradient(180deg,rgba(30,120,255,0.${8-i*2}),rgba(0,60,180,0.9));border-radius:50% 50% 0 0;z-index:${6+i};animation:waveCrash .8s ${delay}s ease forwards;`;
-    ov.appendChild(wave);
-  });
-  setTimeout(()=>{img.style.animation='waveWash 1s .3s ease forwards';},300);
-  // Foam bubbles
-  for(let i=0;i<12;i++){
-    const bubble=document.createElement('div');
-    bubble.style.cssText=`position:absolute;width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;border-radius:50%;background:rgba(255,255,255,0.8);bottom:${Math.random()*40}%;left:${Math.random()*100}%;animation:emojiBurst .4s ${0.3+Math.random()*0.6}s ease forwards;`;
-    ov.appendChild(bubble);
+
+  // Build a CSS curling wave wall that rises from the bottom
+  const waveWall=document.createElement('div');
+  waveWall.style.cssText='position:absolute;bottom:-120%;left:-5%;width:110%;z-index:14;animation:waveWallRise 1s .2s ease forwards;pointer-events:none;';
+
+  // Wave body
+  const waveBody=document.createElement('div');
+  waveBody.style.cssText='width:100%;height:300px;background:linear-gradient(180deg,rgba(0,180,255,0.95) 0%,rgba(0,100,200,0.98) 40%,rgba(0,60,160,1) 100%);position:relative;border-radius:0;';
+
+  // Curl at the top — the characteristic wave curl
+  const curl=document.createElement('div');
+  curl.style.cssText='position:absolute;top:-60px;left:0;right:0;height:80px;background:linear-gradient(180deg,transparent,rgba(0,180,255,0.95));border-radius:50% 50% 0 0 / 80% 80% 0 0;transform:scaleX(1.02);';
+
+  // White foam crest
+  const foam=document.createElement('div');
+  foam.style.cssText='position:absolute;top:-68px;left:0;right:0;height:20px;background:linear-gradient(90deg,rgba(255,255,255,0.95),rgba(200,240,255,0.9),rgba(255,255,255,0.95));border-radius:50%;filter:blur(3px);';
+
+  // Inner shadow of curl
+  const innerCurl=document.createElement('div');
+  innerCurl.style.cssText='position:absolute;top:-40px;left:5%;right:5%;height:50px;background:radial-gradient(ellipse,rgba(0,50,120,0.6),transparent 70%);border-radius:50%;';
+
+  waveBody.appendChild(curl);waveBody.appendChild(foam);waveBody.appendChild(innerCurl);
+  waveWall.appendChild(waveBody);
+  ov.appendChild(waveWall);
+
+  // Foam spray particles ahead of the wave
+  for(let i=0;i<20;i++){
+    const spray=document.createElement('div');
+    const sz=4+Math.random()*8;
+    spray.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:rgba(255,255,255,${0.7+Math.random()*0.3});bottom:${15+Math.random()*30}%;left:${Math.random()*100}%;z-index:13;animation:sprayFly .5s ${0.4+Math.random()*0.8}s ease forwards;`;
+    ov.appendChild(spray);
   }
+
+  // Turbulent water lines on wave face
+  for(let i=0;i<6;i++){
+    const line=document.createElement('div');
+    line.style.cssText=`position:absolute;bottom:${8+i*6}%;left:${Math.random()*20}%;right:${Math.random()*20}%;height:2px;background:rgba(150,220,255,0.5);border-radius:50%;z-index:15;animation:waveWallRise 1s ${0.2+i*0.05}s ease forwards;`;
+    ov.appendChild(line);
+  }
+
+  // Image crashes and washes away
+  setTimeout(()=>{img.style.animation='waveWash 1.2s ease forwards';},600);
+
+  // Post-crash foam bubbles
+  setTimeout(()=>{
+    for(let i=0;i<16;i++){
+      const b=document.createElement('div');
+      const sz=4+Math.random()*12;
+      b.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:rgba(255,255,255,${0.6+Math.random()*0.4});bottom:${Math.random()*50}%;left:${Math.random()*100}%;z-index:16;animation:emojiBurst .4s ${Math.random()*0.4}s ease forwards;`;
+      ov.appendChild(b);
+    }
+  },800);
 }
 
 function doDragon(img,ov){
