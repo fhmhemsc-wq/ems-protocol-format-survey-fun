@@ -342,6 +342,54 @@ textarea.form-control{resize:vertical;min-height:90px;line-height:1.5;}
   100%{opacity:0;transform:scale(.9);}
 }
 
+/* Screen shake */
+@keyframes screenShake{
+  0%,100%{transform:translate(0,0);}
+  20%{transform:translate(-6px,3px);}
+  40%{transform:translate(6px,-3px);}
+  60%{transform:translate(-4px,5px);}
+  80%{transform:translate(4px,-2px);}
+}
+/* Crystal form */
+@keyframes crystalForm{
+  0%{opacity:0;transform:scale(0);}
+  100%{opacity:1;transform:scale(1);}
+}
+/* Pixel layer */
+@keyframes pixelLayerIn{
+  0%{opacity:0;}50%{opacity:0.6;}100%{opacity:0;}
+}
+/* Lightning single flash */
+@keyframes lightningFlashSingle{
+  0%{opacity:0;}30%{opacity:1;}70%{opacity:1;}100%{opacity:0;}
+}
+/* Lightning strike (bolt drops) */
+@keyframes lightningStrike{
+  0%{opacity:0;transform:translateY(-30px);}
+  30%{opacity:1;transform:translateY(0);}
+  70%{opacity:1;}
+  100%{opacity:0;}
+}
+/* Shark fin slides in */
+@keyframes sharkFinIn{
+  0%{right:-60px;opacity:0;}
+  100%{right:30%;opacity:1;}
+}
+/* Wave crash up */
+@keyframes waveCrash{
+  0%{transform:translateY(100%);}
+  100%{transform:translateY(-60%);}
+}
+/* Black hole pulse */
+@keyframes blackHolePulse{
+  0%{transform:translate(-50%,-50%) scale(1);}
+  100%{transform:translate(-50%,-50%) scale(1.3);}
+}
+/* Fuse spark travels */
+@keyframes fuseSpark{
+  0%{left:54%;opacity:1;}
+  100%{left:62%;opacity:0;}
+}
 /* Emoji burst */
 .destruction-emoji{
   position:fixed;top:50%;left:50%;
@@ -1007,12 +1055,6 @@ function playDestruction(winningSide, roundIdx, callback){
   overlay.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:10;overflow:visible;display:flex;align-items:center;justify-content:center;';
   stage.appendChild(overlay);
 
-  // Emoji label
-  const emojiEl=document.createElement('div');
-  emojiEl.style.cssText='position:absolute;top:8%;left:50%;transform:translateX(-50%);font-size:64px;z-index:20;pointer-events:none;animation:emojiBurst .4s ease forwards;';
-  emojiEl.textContent=d.emoji;
-  stage.appendChild(emojiEl);
-
   // Round label
   const roundLabel=document.createElement('div');
   roundLabel.style.cssText='position:absolute;bottom:6%;left:50%;transform:translateX(-50%);font-family:"IBM Plex Mono",monospace;font-size:13px;color:rgba(255,255,255,.5);white-space:nowrap;letter-spacing:.06em;';
@@ -1032,14 +1074,14 @@ function playDestruction(winningSide, roundIdx, callback){
     runDestructionAnimation(d.name, fsImg, overlay);
   }, 400);
 
-  // Fade out and cleanup — then enable Next button
+  // Fade out and cleanup — then advance
   setTimeout(()=>{
     stage.style.opacity='0';
     setTimeout(()=>{
       stage.remove();
       callback();
-    }, 300);
-  }, 2400);
+    }, 400);
+  }, 3800);
 }
 
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
@@ -1065,121 +1107,384 @@ function runDestructionAnimation(name, img, overlay){
 }
 
 function doNinja(img,ov){
-  // Slash line across the image
-  const slash=document.createElement('div');
-  slash.style.cssText='position:absolute;top:50%;left:-5%;width:0;height:3px;background:linear-gradient(90deg,transparent,#fff,transparent);transform:rotate(-12deg);box-shadow:0 0 8px #fff;animation:slashLine .25s ease forwards;';
-  ov.appendChild(slash);
+  // Three rapid slashes, image splits apart
+  const angles=[-15,-5,10];
+  const positions=['30%','50%','70%'];
+  angles.forEach((a,i)=>{
+    const slash=document.createElement('div');
+    slash.style.cssText=`position:absolute;top:${positions[i]};left:-10%;width:0;height:4px;background:linear-gradient(90deg,transparent,#fff 30%,#ffcccc,transparent);transform:rotate(${a}deg);box-shadow:0 0 12px #fff,0 0 4px #ff8888;animation:slashLine .2s ${i*0.25}s ease forwards;transform-origin:left center;`;
+    ov.appendChild(slash);
+  });
+  // After 3 slashes, image splits into 3 pieces sliding away
   setTimeout(()=>{
-    img.style.clipPath='polygon(0 0,100% 0,100% 47%,0 47%)';
-    img.style.animation='slashSplitUp .5s ease forwards';
-  },250);
-  setTimeout(()=>{img.style.opacity='0';},750);
+    img.style.transition='all 1.2s ease';
+    img.style.filter='brightness(1.5)';
+  },100);
+  setTimeout(()=>{
+    // Top third slides up-left
+    const t=img.cloneNode();t.style.cssText=img.style.cssText;
+    t.style.cssText+=';position:absolute;inset:0;clip-path:polygon(0 0,100% 0,100% 33%,0 33%);animation:slashSplitUp 1s ease forwards;z-index:5;';
+    ov.appendChild(t);
+    // Middle third stays briefly then fades
+    const m=img.cloneNode();
+    m.style.cssText+=';position:absolute;inset:0;clip-path:polygon(0 33%,100% 33%,100% 66%,0 66%);animation:explodeFade .8s .3s ease forwards;z-index:5;';
+    ov.appendChild(m);
+    // Bottom third slides down-right
+    const b=img.cloneNode();
+    b.style.cssText+=';position:absolute;inset:0;clip-path:polygon(0 66%,100% 66%,100% 100%,0 100%);animation:slashSplit .9s ease forwards;z-index:5;';
+    ov.appendChild(b);
+    img.style.opacity='0';
+  },800);
 }
+
 function doFire(img,ov){
-  img.style.animation='burnUp .9s ease forwards';
-  for(let i=0;i<14;i++){
+  // Flames rise from bottom, image chars and burns away
+  for(let i=0;i<22;i++){
     const f=document.createElement('div');
-    const w=18+Math.random()*28;
-    f.style.cssText=`position:absolute;bottom:0;width:${w}px;height:${w*1.6}px;left:${Math.random()*90}%;border-radius:50% 50% 20% 20%;background:linear-gradient(180deg,#fff700,#ff6600,#ff0000);animation:flame ${.3+Math.random()*.3}s infinite ease-in-out;animation-delay:${Math.random()*.2}s;opacity:.9;`;
+    const w=24+Math.random()*36;
+    const left=Math.random()*95;
+    const delay=Math.random()*0.8;
+    const dur=0.4+Math.random()*0.5;
+    f.style.cssText=`position:absolute;bottom:0;width:${w}px;height:${w*2}px;left:${left}%;border-radius:50% 50% 20% 20%;background:linear-gradient(180deg,#ffffff 0%,#ffff00 20%,#ff8800 50%,#ff2200 80%,transparent 100%);animation:flame ${dur}s ${delay}s infinite ease-in-out;opacity:.95;mix-blend-mode:screen;`;
     ov.appendChild(f);
   }
+  // Embers
+  for(let i=0;i<16;i++){
+    const e=document.createElement('div');
+    const cx=(Math.random()-0.5)*200+'px';
+    const cy=-(80+Math.random()*150)+'px';
+    e.style.cssText=`position:absolute;width:4px;height:4px;border-radius:50%;background:#ffcc00;bottom:20%;left:${20+Math.random()*60}%;--cx:${cx};--cy:${cy};--cr:${Math.random()*360}deg;animation:confettiFall ${0.8+Math.random()*0.8}s ${Math.random()*0.5}s ease forwards;`;
+    ov.appendChild(e);
+  }
+  setTimeout(()=>{img.style.animation='burnUp 2s ease forwards';},200);
 }
+
 function doExplode(img,ov){
-  img.style.animation='explodeFade .35s ease forwards';
-  const colors=['#ff6600','#ffcc00','#ff3300','#ffffff','#ff9900'];
-  for(let i=0;i<24;i++){
-    const s=document.createElement('div');
-    const angle=Math.random()*360;
-    const dist=60+Math.random()*100;
-    const ex=Math.cos(angle*Math.PI/180)*dist+'px';
-    const ey=Math.sin(angle*Math.PI/180)*dist+'px';
-    s.style.cssText=`position:absolute;width:10px;height:10px;border-radius:2px;top:50%;left:50%;background:${colors[Math.floor(Math.random()*colors.length)]};--ex:${ex};--ey:${ey};animation:explodeOut ${.4+Math.random()*.4}s ease forwards;animation-delay:${Math.random()*.08}s;`;
-    ov.appendChild(s);
-  }
+  // Dynamite appears with burning fuse, then BOOM
+  const dynamite=document.createElement('div');
+  dynamite.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:80px;z-index:15;pointer-events:none;';
+  dynamite.textContent='🧨';
+  ov.appendChild(dynamite);
+  // Fuse sparks
+  const fuse=document.createElement('div');
+  fuse.style.cssText='position:absolute;top:35%;left:54%;width:0;height:4px;background:linear-gradient(90deg,#ff8800,#ffff00);box-shadow:0 0 8px #ff8800;border-radius:2px;animation:slashLine .8s ease forwards;transform-origin:left;';
+  ov.appendChild(fuse);
+  // Fuse spark particle
+  const spark=document.createElement('div');
+  spark.style.cssText='position:absolute;top:33%;left:54%;width:10px;height:10px;border-radius:50%;background:#ffff00;box-shadow:0 0 12px #ff8800;animation:fuseSpark .8s linear forwards;';
+  ov.appendChild(spark);
+  // After fuse burns — explosion
+  setTimeout(()=>{
+    dynamite.style.animation='emojiBurst .1s ease forwards';
+    dynamite.style.opacity='0';
+    img.style.animation='explodeFade .4s ease forwards';
+    // Big flash
+    const flash=document.createElement('div');
+    flash.style.cssText='position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,#ffffff 0%,#ffff00 30%,#ff6600 60%,transparent 80%);animation:explodeFade .6s ease forwards;z-index:20;';
+    ov.appendChild(flash);
+    // Lots of shards
+    const colors=['#ff6600','#ffcc00','#ff3300','#ffffff','#ff9900','#ffff00'];
+    for(let i=0;i<40;i++){
+      const s=document.createElement('div');
+      const angle=Math.random()*360;
+      const dist=80+Math.random()*180;
+      const ex=Math.cos(angle*Math.PI/180)*dist+'px';
+      const ey=Math.sin(angle*Math.PI/180)*dist+'px';
+      const sz=4+Math.random()*12;
+      s.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:${Math.random()>.5?'50%':'2px'};top:50%;left:50%;background:${colors[Math.floor(Math.random()*colors.length)]};--ex:${ex};--ey:${ey};animation:explodeOut ${.5+Math.random()*.6}s ease forwards;animation-delay:${Math.random()*.1}s;`;
+      ov.appendChild(s);
+    }
+  },900);
 }
+
 function doTornado(img,ov){
-  img.style.animation='tornadoSpin 1s ease forwards';
-  const t=document.createElement('div');
-  t.style.cssText='position:absolute;top:10%;left:50%;transform:translateX(-50%);font-size:56px;pointer-events:none;animation:tornadoSpin .8s ease forwards;';
-  t.textContent='🌪️';ov.appendChild(t);
-}
-function doLightning(img,ov){
-  const flash=document.createElement('div');
-  flash.style.cssText='position:absolute;inset:0;background:#fff;animation:lightningFlash .5s ease forwards;border-radius:4px;';
-  ov.appendChild(flash);
-  img.style.animation='zappedFade .8s .4s ease forwards';
-  const bolt=document.createElement('div');
-  bolt.style.cssText='position:absolute;top:-10px;left:45%;font-size:52px;pointer-events:none;animation:hammerDrop .3s ease forwards;';
-  bolt.textContent='⚡';ov.appendChild(bolt);
-}
-function doBlackhole(img,ov){
-  img.style.animation='blackHoleSuck 1s ease forwards';
-  const bh=document.createElement('div');
-  bh.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#000;box-shadow:0 0 30px 10px rgba(0,0,0,.8);animation:blackHoleSuck .8s ease forwards;pointer-events:none;';
-  ov.appendChild(bh);
-}
-function doHammer(img,ov){
-  const hammer=document.createElement('div');
-  hammer.style.cssText='position:absolute;top:-60px;left:50%;transform:translateX(-50%);font-size:64px;pointer-events:none;animation:hammerDrop .4s ease forwards;';
-  hammer.textContent='🔨';ov.appendChild(hammer);
-  setTimeout(()=>{img.style.animation='hammerSmash .5s ease forwards';},380);
-}
-function doShark(img,ov){
-  const shark=document.createElement('div');
-  shark.style.cssText='position:absolute;top:25%;right:-80px;font-size:72px;pointer-events:none;animation:sharkIn .5s ease forwards;';
-  shark.textContent='🦈';ov.appendChild(shark);
-  setTimeout(()=>{img.style.animation='sharkBite .4s ease forwards';},480);
-}
-function doFreeze(img,ov){
-  img.style.animation='freeze .5s ease forwards';
-  const ice=document.createElement('div');
-  ice.style.cssText='position:absolute;inset:0;background:rgba(147,210,255,.15);border:2px solid rgba(147,210,255,.4);border-radius:4px;pointer-events:none;';
-  ov.appendChild(ice);
-  setTimeout(()=>{img.style.animation='shatter .4s ease forwards';},500);
-}
-function doPixel(img,ov){
-  img.style.imageRendering='pixelated';
-  img.style.animation='pixelate .9s ease forwards';
-  const scan=document.createElement('div');
-  scan.style.cssText='position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.15) 0px,rgba(0,0,0,.15) 2px,transparent 2px,transparent 4px);pointer-events:none;animation:pixelate .9s ease forwards;';
-  ov.appendChild(scan);
-}
-function doWave(img,ov){
-  const wave=document.createElement('div');
-  wave.style.cssText='position:absolute;bottom:-5px;left:-5%;width:110%;height:35px;background:rgba(59,130,246,.75);border-radius:50%;pointer-events:none;';
-  ov.appendChild(wave);
-  img.style.animation='waveWash .7s ease forwards';
-}
-function doDragon(img,ov){
-  const dragon=document.createElement('div');
-  dragon.style.cssText='position:absolute;top:15%;left:-90px;font-size:64px;pointer-events:none;transition:left .35s ease;';
-  dragon.textContent='🐉';ov.appendChild(dragon);
-  setTimeout(()=>{dragon.style.left='-20px';},50);
-  img.style.animation='dragonFire .9s .3s ease forwards';
-}
-function doRocket(img,ov){
-  const rocket=document.createElement('div');
-  rocket.style.cssText='position:absolute;top:40%;left:45%;font-size:52px;pointer-events:none;animation:rocketUp .8s ease forwards;';
-  rocket.textContent='🚀';ov.appendChild(rocket);
-  setTimeout(()=>{img.style.animation='rocketUp 1s ease forwards';},100);
-}
-function doBanana(img,ov){
-  const banana=document.createElement('div');
-  banana.style.cssText='position:absolute;bottom:8px;left:35%;font-size:42px;pointer-events:none;';
-  banana.textContent='🍌';ov.appendChild(banana);
-  img.style.animation='bananaSlip 1s ease forwards';
-}
-function doConfetti(img,ov){
-  img.style.animation='finalDisintegrate .9s ease forwards';
-  const colors=['#ff6600','#ffcc00','#00c9a7','#3b82f6','#f43f5e','#a855f7'];
-  for(let i=0;i<35;i++){
-    const c=document.createElement('div');
-    const cx=(Math.random()-0.5)*300+'px';
-    const cy=-(60+Math.random()*180)+'px';
-    const cr=(Math.random()-0.5)*720+'deg';
-    c.style.cssText=`position:absolute;width:8px;height:8px;border-radius:${Math.random()>.5?'50%':'2px'};background:${colors[Math.floor(Math.random()*colors.length)]};top:50%;left:50%;--cx:${cx};--cy:${cy};--cr:${cr};animation:confettiFall .9s ease forwards;animation-delay:${Math.random()*.2}s;`;
-    ov.appendChild(c);
+  // Tornado forms at bottom and grows, spinning the image away
+  const tornado=document.createElement('div');
+  tornado.style.cssText='position:absolute;bottom:-10%;left:50%;transform:translateX(-50%);font-size:0px;pointer-events:none;transition:font-size 0.6s ease;z-index:15;';
+  tornado.textContent='🌪️';
+  ov.appendChild(tornado);
+  setTimeout(()=>{tornado.style.fontSize='120px';},50);
+  // Debris particles spinning outward
+  for(let i=0;i<20;i++){
+    const d=document.createElement('div');
+    const angle=Math.random()*360;
+    const dist=60+Math.random()*120;
+    d.style.cssText=`position:absolute;width:6px;height:6px;border-radius:1px;top:60%;left:50%;background:rgba(200,200,200,0.8);--ex:${Math.cos(angle*Math.PI/180)*dist}px;--ey:${Math.sin(angle*Math.PI/180)*dist}px;--cr:${Math.random()*720}deg;animation:confettiFall ${0.6+Math.random()*0.8}s ${0.4+Math.random()*0.4}s ease forwards;`;
+    ov.appendChild(d);
   }
+  setTimeout(()=>{img.style.animation='tornadoSpin 1.5s ease forwards';},500);
+}
+
+function doLightning(img,ov){
+  // Multiple lightning bolts strike sequentially, image zaps away
+  const bolts=['15%','50%','80%'];
+  bolts.forEach((left,i)=>{
+    const bolt=document.createElement('div');
+    bolt.style.cssText=`position:absolute;top:-5%;left:${left};font-size:72px;pointer-events:none;opacity:0;animation:lightningStrike .15s ${i*0.3}s ease forwards;z-index:15;`;
+    bolt.textContent='⚡';
+    ov.appendChild(bolt);
+    // Flash on each strike
+    const flash=document.createElement('div');
+    flash.style.cssText=`position:absolute;inset:0;background:#fff;opacity:0;border-radius:4px;animation:lightningFlashSingle .15s ${i*0.3}s ease forwards;`;
+    ov.appendChild(flash);
+  });
+  setTimeout(()=>{img.style.animation='zappedFade 1s ease forwards';},900);
+  // Crackling sparks
+  for(let i=0;i<15;i++){
+    const sp=document.createElement('div');
+    sp.style.cssText=`position:absolute;width:3px;height:3px;border-radius:50%;background:#ffffaa;top:${Math.random()*100}%;left:${Math.random()*100}%;--cx:${(Math.random()-0.5)*100}px;--cy:${(Math.random()-0.5)*100}px;--cr:${Math.random()*360}deg;animation:confettiFall .4s ${Math.random()*0.8}s ease forwards;`;
+    ov.appendChild(sp);
+  }
+}
+
+function doBlackhole(img,ov){
+  // Black hole grows from center, pulls image in with spiral
+  const rings=[80,60,40,20].map((sz,i)=>{
+    const r=document.createElement('div');
+    r.style.cssText=`position:absolute;top:50%;left:50%;width:${sz}px;height:${sz}px;margin:-${sz/2}px 0 0 -${sz/2}px;border-radius:50%;border:2px solid rgba(150,0,255,${0.3+i*0.15});box-shadow:0 0 ${sz/2}px rgba(150,0,255,0.4);animation:blackHolePulse .6s ${i*0.1}s infinite alternate;z-index:10;`;
+    ov.appendChild(r);
+    return r;
+  });
+  const center=document.createElement('div');
+  center.style.cssText='position:absolute;top:50%;left:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#000;box-shadow:0 0 30px 15px rgba(80,0,180,0.8),0 0 60px 30px rgba(0,0,0,0.6);z-index:11;';
+  ov.appendChild(center);
+  setTimeout(()=>{
+    img.style.animation='blackHoleSuck 1.8s ease forwards';
+    rings.forEach(r=>r.style.animation='blackHoleSuck 1.8s ease forwards');
+  },400);
+}
+
+function doHammer(img,ov){
+  // Giant hammer drops, screen shakes, image shatters
+  const hammer=document.createElement('div');
+  hammer.style.cssText='position:absolute;top:-120px;left:50%;transform:translateX(-50%) rotate(-20deg);font-size:96px;pointer-events:none;z-index:15;animation:hammerDrop .5s ease forwards;transform-origin:top right;';
+  hammer.textContent='🔨';
+  ov.appendChild(hammer);
+  // Impact stars
+  setTimeout(()=>{
+    const impact=document.createElement('div');
+    impact.style.cssText='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:80px;animation:emojiBurst .3s ease forwards;z-index:16;pointer-events:none;';
+    impact.textContent='💥';
+    ov.appendChild(impact);
+    // Screen shake via stage
+    const stage=hammer.closest('[style*="position:fixed"]');
+    if(stage){
+      stage.style.animation='screenShake .4s ease';
+    }
+    img.style.animation='hammerSmash .6s ease forwards';
+    // Cracks radiate out
+    for(let i=0;i<8;i++){
+      const crack=document.createElement('div');
+      const angle=i*(360/8);
+      const len=40+Math.random()*60;
+      crack.style.cssText=`position:absolute;top:50%;left:50%;width:0;height:2px;background:rgba(255,255,255,0.8);transform:rotate(${angle}deg);transform-origin:left center;animation:slashLine .3s ease forwards;`;
+      ov.appendChild(crack);
+    }
+  },480);
+}
+
+function doShark(img,ov){
+  // Shark swims in from right with open mouth, chomps image
+  const water=document.createElement('div');
+  water.style.cssText='position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(180deg,transparent,rgba(0,80,200,0.5));animation:waveWash 3s ease forwards;z-index:5;';
+  ov.appendChild(water);
+  // Fin appears first
+  const fin=document.createElement('div');
+  fin.style.cssText='position:absolute;bottom:38%;right:-60px;font-size:40px;pointer-events:none;z-index:12;animation:sharkFinIn .8s ease forwards;';
+  fin.textContent='🔱';
+  ov.appendChild(fin);
+  // Then full shark appears
+  const shark=document.createElement('div');
+  shark.style.cssText='position:absolute;top:30%;right:-140px;font-size:110px;pointer-events:none;z-index:13;animation:sharkIn 1s .5s ease forwards;';
+  shark.textContent='🦈';
+  ov.appendChild(shark);
+  // Chomp — image gets bitten
+  setTimeout(()=>{
+    img.style.animation='sharkBite .5s ease forwards';
+    const chomp=document.createElement('div');
+    chomp.style.cssText='position:absolute;top:20%;left:30%;font-size:60px;animation:emojiBurst .3s ease forwards;pointer-events:none;z-index:16;';
+    chomp.textContent='💦';
+    ov.appendChild(chomp);
+  },1400);
+}
+
+function doFreeze(img,ov){
+  // Ice crystals spread across image, then it shatters
+  for(let i=0;i<12;i++){
+    const crystal=document.createElement('div');
+    const size=20+Math.random()*30;
+    crystal.style.cssText=`position:absolute;top:${Math.random()*90}%;left:${Math.random()*90}%;width:${size}px;height:${size}px;background:rgba(147,210,255,0.7);border:1px solid rgba(200,240,255,0.9);clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);opacity:0;animation:crystalForm .3s ${i*0.1}s ease forwards;z-index:10;`;
+    ov.appendChild(crystal);
+  }
+  // Freeze image
+  setTimeout(()=>{
+    img.style.animation='freeze .8s ease forwards';
+    img.style.filter='brightness(0.6) saturate(0) hue-rotate(180deg)';
+  },400);
+  // Shatter — pieces fly apart
+  setTimeout(()=>{
+    img.style.opacity='0';
+    for(let i=0;i<20;i++){
+      const shard=document.createElement('div');
+      const sz=15+Math.random()*25;
+      const angle=Math.random()*360;
+      const dist=80+Math.random()*150;
+      shard.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;top:${20+Math.random()*60}%;left:${20+Math.random()*60}%;background:rgba(180,230,255,0.8);border:1px solid rgba(200,240,255,0.9);clip-path:polygon(${Math.random()*30}% 0%,100% ${Math.random()*30}%,${70+Math.random()*30}% 100%,0% ${70+Math.random()*30}%);--ex:${Math.cos(angle*Math.PI/180)*dist}px;--ey:${Math.sin(angle*Math.PI/180)*dist}px;--cr:${Math.random()*360}deg;animation:confettiFall ${0.6+Math.random()*0.6}s ease forwards;`;
+      ov.appendChild(shard);
+    }
+  },1200);
+}
+
+function doPixel(img,ov){
+  // Image pixelates into larger and larger blocks then dissolves
+  img.style.imageRendering='pixelated';
+  // Overlay with growing pixelation effect
+  const steps=[4,8,16,32,64];
+  steps.forEach((px,i)=>{
+    const layer=document.createElement('canvas');
+    layer.style.cssText=`position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;opacity:0;animation:pixelLayerIn .25s ${i*0.25}s ease forwards;z-index:${5+i};`;
+    ov.appendChild(layer);
+    setTimeout(()=>{
+      const ctx2=layer.getContext('2d');
+      layer.width=px;layer.height=px;
+      ctx2.drawImage(img,0,0,px,px);
+    },i*250);
+  });
+  setTimeout(()=>{img.style.animation='pixelate 1.5s ease forwards';},200);
+  // Glitch lines
+  for(let i=0;i<8;i++){
+    const glitch=document.createElement('div');
+    glitch.style.cssText=`position:absolute;left:0;right:0;height:${3+Math.random()*8}px;top:${Math.random()*100}%;background:rgba(0,201,167,0.6);opacity:0;animation:lightningFlashSingle .1s ${Math.random()*1.5}s ease forwards;`;
+    ov.appendChild(glitch);
+  }
+}
+
+function doWave(img,ov){
+  // Ocean wave washes over and sweeps image away
+  // Sky darkens
+  const sky=document.createElement('div');
+  sky.style.cssText='position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,30,80,0.6),transparent);z-index:4;';
+  ov.appendChild(sky);
+  // Multiple wave layers
+  [0,0.3,0.6].forEach((delay,i)=>{
+    const wave=document.createElement('div');
+    const h=60+i*20;
+    wave.style.cssText=`position:absolute;bottom:-${h}px;left:-10%;width:120%;height:${h+40}px;background:linear-gradient(180deg,rgba(30,120,255,0.${8-i*2}),rgba(0,60,180,0.9));border-radius:50% 50% 0 0;z-index:${6+i};animation:waveCrash .8s ${delay}s ease forwards;`;
+    ov.appendChild(wave);
+  });
+  setTimeout(()=>{img.style.animation='waveWash 1s .3s ease forwards';},300);
+  // Foam bubbles
+  for(let i=0;i<12;i++){
+    const bubble=document.createElement('div');
+    bubble.style.cssText=`position:absolute;width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;border-radius:50%;background:rgba(255,255,255,0.8);bottom:${Math.random()*40}%;left:${Math.random()*100}%;animation:emojiBurst .4s ${0.3+Math.random()*0.6}s ease forwards;`;
+    ov.appendChild(bubble);
+  }
+}
+
+function doDragon(img,ov){
+  // Dragon flies in from left, breathes fire across the image
+  const dragon=document.createElement('div');
+  dragon.style.cssText='position:absolute;top:20%;left:-180px;font-size:100px;pointer-events:none;z-index:15;transition:left 0.7s ease;';
+  dragon.textContent='🐉';
+  ov.appendChild(dragon);
+  setTimeout(()=>{dragon.style.left='5%';},50);
+  // Fire breath stream after dragon arrives
+  setTimeout(()=>{
+    const fireStream=document.createElement('div');
+    fireStream.style.cssText='position:absolute;top:30%;left:18%;width:0;height:20px;background:linear-gradient(90deg,#fff700,#ff6600,transparent);border-radius:0 50% 50% 0;box-shadow:0 0 20px #ff6600;animation:slashLine .5s ease forwards;z-index:14;';
+    ov.appendChild(fireStream);
+    for(let i=0;i<18;i++){
+      const f=document.createElement('div');
+      const w=20+Math.random()*30;
+      f.style.cssText=`position:absolute;top:${10+Math.random()*50}%;left:${15+Math.random()*60}%;width:${w}px;height:${w*1.8}px;border-radius:50% 50% 20% 20%;background:linear-gradient(180deg,#ffffff,#ffff00,#ff8800,#ff2200);animation:flame ${.3+Math.random()*.4}s ${Math.random()*.3}s infinite ease-in-out;opacity:.95;mix-blend-mode:screen;z-index:13;`;
+      ov.appendChild(f);
+    }
+    img.style.animation='dragonFire 1.5s ease forwards';
+  },700);
+}
+
+function doRocket(img,ov){
+  // Countdown, then rocket launches taking image with it
+  const countdown=document.createElement('div');
+  countdown.style.cssText='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:80px;font-weight:900;color:#fff;font-family:"IBM Plex Mono",monospace;z-index:20;pointer-events:none;opacity:0;';
+  ov.appendChild(countdown);
+  ['3','2','1','🚀'].forEach((n,i)=>{
+    setTimeout(()=>{
+      countdown.textContent=n;
+      countdown.style.animation='none';
+      void countdown.offsetWidth;
+      countdown.style.opacity='1';
+      countdown.style.animation='emojiBurst .4s ease forwards';
+    },i*400);
+  });
+  // Rocket launches
+  setTimeout(()=>{
+    countdown.style.opacity='0';
+    const rocket=document.createElement('div');
+    rocket.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:80px;z-index:15;pointer-events:none;animation:rocketUp 1s ease forwards;';
+    rocket.textContent='🚀';
+    ov.appendChild(rocket);
+    // Exhaust trail
+    for(let i=0;i<10;i++){
+      const exhaust=document.createElement('div');
+      exhaust.style.cssText=`position:absolute;top:60%;left:${46+Math.random()*8}%;width:8px;height:8px;border-radius:50%;background:rgba(255,150,0,0.8);animation:rocketUp ${0.5+Math.random()*0.5}s ${Math.random()*0.5}s ease forwards;`;
+      ov.appendChild(exhaust);
+    }
+    img.style.animation='rocketUp 1.2s ease forwards';
+  },1700);
+}
+
+function doBanana(img,ov){
+  // Banana peel placed, person slips, image falls and bounces away
+  const peel=document.createElement('div');
+  peel.style.cssText='position:absolute;bottom:5%;left:40%;font-size:52px;pointer-events:none;z-index:15;animation:emojiBurst .3s ease forwards;';
+  peel.textContent='🍌';
+  ov.appendChild(peel);
+  // Warning sign
+  const warn=document.createElement('div');
+  warn.style.cssText='position:absolute;top:20%;left:50%;transform:translate(-50%,-50%);font-size:56px;pointer-events:none;z-index:15;opacity:0;animation:emojiBurst .3s .4s ease forwards;';
+  warn.textContent='⚠️';
+  ov.appendChild(warn);
+  setTimeout(()=>{
+    // Stars from the fall
+    const stars=document.createElement('div');
+    stars.style.cssText='position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);font-size:40px;pointer-events:none;z-index:16;animation:emojiBurst .4s ease forwards;';
+    stars.textContent='⭐💫⭐';
+    ov.appendChild(stars);
+    img.style.animation='bananaSlip 1.5s ease forwards';
+  },700);
+  // Bounce sound effect visual
+  setTimeout(()=>{
+    const boing=document.createElement('div');
+    boing.style.cssText='position:absolute;bottom:10%;left:30%;font-size:32px;color:#ffcc00;font-weight:900;font-family:"IBM Plex Mono",monospace;pointer-events:none;z-index:16;animation:emojiBurst .5s ease forwards;';
+    boing.textContent='BOING!';
+    ov.appendChild(boing);
+  },1200);
+}
+
+function doConfetti(img,ov){
+  // Trophy appears, image explodes into confetti celebration
+  const trophy=document.createElement('div');
+  trophy.style.cssText='position:absolute;top:10%;left:50%;transform:translateX(-50%);font-size:80px;pointer-events:none;z-index:15;animation:emojiBurst .5s ease forwards;';
+  trophy.textContent='🏆';
+  ov.appendChild(trophy);
+  const text=document.createElement('div');
+  text.style.cssText='position:absolute;top:28%;left:50%;transform:translateX(-50%);font-size:22px;font-weight:700;color:#ffcc00;font-family:"IBM Plex Mono",monospace;white-space:nowrap;z-index:15;letter-spacing:.1em;animation:emojiBurst .5s .2s ease forwards;opacity:0;text-shadow:0 0 20px #ff8800;';
+  text.textContent='FINAL ROUND!';
+  ov.appendChild(text);
+  setTimeout(()=>{
+    img.style.animation='finalDisintegrate 1.2s ease forwards';
+    const colors=['#ff6600','#ffcc00','#00c9a7','#3b82f6','#f43f5e','#a855f7','#ffffff','#ffff00'];
+    for(let i=0;i<60;i++){
+      const c=document.createElement('div');
+      const cx=(Math.random()-0.5)*400+'px';
+      const cy=-(40+Math.random()*250)+'px';
+      const cr=(Math.random()-0.5)*900+'deg';
+      const sz=6+Math.random()*10;
+      c.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:${Math.random()>.5?'50%':'2px'};background:${colors[Math.floor(Math.random()*colors.length)]};top:50%;left:${20+Math.random()*60}%;--cx:${cx};--cy:${cy};--cr:${cr};animation:confettiFall ${0.8+Math.random()*1.2}s ease forwards;animation-delay:${Math.random()*.4}s;`;
+      ov.appendChild(c);
+    }
+  },500);
 }
 
 // ════════════════════════════════════════════
