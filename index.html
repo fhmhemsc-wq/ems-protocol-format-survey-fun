@@ -1628,7 +1628,7 @@ function doDragon(img,ov){
 function doRocket(img,ov){
   // Countdown, then rocket launches taking image with it
   const countdown=document.createElement('div');
-  countdown.style.cssText='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:80px;font-weight:900;color:#fff;font-family:"IBM Plex Mono",monospace;z-index:20;pointer-events:none;opacity:0;';
+  countdown.style.cssText='position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-size:80px;font-weight:900;color:#cc0000;font-family:"IBM Plex Mono",monospace;z-index:20;pointer-events:none;opacity:0;text-shadow:2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,0 0 20px rgba(200,0,0,0.5);';
   ov.appendChild(countdown);
   ['3','2','1','🚀'].forEach((n,i)=>{
     setTimeout(()=>{
