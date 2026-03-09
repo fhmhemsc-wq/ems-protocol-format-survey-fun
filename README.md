@@ -237,4 +237,4 @@ This method is appropriate for ordinal preference research and is consistent wit
 
 ---
 
-*Developed for Grand County EMS / Foothills RETAC qualitative protocol format research.*
+*Developed for UCHealth / Foothills and Mile-High RETAC Regional Medical Direction Program qualitative protocol format research.*
